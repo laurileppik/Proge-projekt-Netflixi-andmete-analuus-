@@ -32,4 +32,13 @@ def tunde_vaatamisele(film):
     tunnid_vaatamisele=tunnid_vaatamisele + " sekundit"
     return(tunnid_vaatamisele)
 
-print(tunde_vaatamisele(film))
+def mitu_osa(film):
+    shape=film.shape
+    tunde=shape[0]
+    return tunde
+
+print(f"Oled vaadanud {mitu_osa(film)} osa {filminimi}i.")
+if mitu_osa(film)>3:
+    print(f"Oled vaadanud seda sarja {tunde_vaatamisele(film)}.")
+else:
+    print(f"Oled vaadanud seda filmi {tunde_vaatamisele(film)}.")
