@@ -2,4 +2,25 @@ import pandas as pd
 
 df = pd.read_csv('ViewingActivity.csv')
 
-print(df.head(1))
+#df.head(1) väljastab kogu esimese rea info
+#print(df.head(1))
+#df.dtypes väljastab andmeklassid
+#print(df.dtypes)
+
+#Selle reaga teen starttime pandale loetavaks
+df['Start Time'] = pd.to_datetime(df['Start Time'], utc=True)
+
+#Nende 3 reaga muudan UTC EETks
+df = df.set_index('Start Time')
+df.index = df.index.tz_convert('EET')
+df = df.reset_index()
+
+#Muudan kestvuse pandale arusaadavaks
+df['Duration'] = pd.to_timedelta(df['Duration'])
+
+#Küsin filminime ja filtreerin välja filmid, mida on vaadetud alla minuti
+filminimi=input("Sisesta film/sari mille kohta tahad infot saada! ")
+film=df[df['Title'].str.contains(filminimi, regex=False)]
+film = film[(film['Duration'] > '0 days 00:01:00')]
+
+print(film.shape)
