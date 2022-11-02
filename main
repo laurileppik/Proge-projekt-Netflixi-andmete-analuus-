@@ -15,6 +15,9 @@ df = df.set_index('Start Time')
 df.index = df.index.tz_convert('EET')
 df = df.reset_index()
 
+#Eemaldan veerud mida ei kavatse kasutada
+df = df.drop(['Attributes', 'Latest Bookmark', 'Country'], axis=1)
+
 #Muudan kestvuse pandale arusaadavaks
 df['Duration'] = pd.to_timedelta(df['Duration'])
 
@@ -23,6 +26,7 @@ filminimi=input("Sisesta film/sari mille kohta tahad infot saada! ")
 film=df[df['Title'].str.contains(filminimi, regex=False)]
 film = film[(film['Duration'] > '0 days 00:01:00')]
 
+#Funktsioon tagastab kui mitu tundi on filmi/sarja vaadatud
 def tunde_vaatamisele(film):
     tunnid_vaatamisele=film['Duration'].sum()
     tunnid_vaatamisele=str(tunnid_vaatamisele)
@@ -32,13 +36,38 @@ def tunde_vaatamisele(film):
     tunnid_vaatamisele=tunnid_vaatamisele + " sekundit"
     return(tunnid_vaatamisele)
 
+#Funktsioon tagastab mitu osa on filmi vaadatud
 def mitu_osa(film):
     shape=film.shape
     tunde=shape[0]
     return tunde
+
+#Funktsioon tagastab mitu korda on vaadatud filme/sarju [arvutist,telefonist]
+def PCjaTelo():
+    list=[]
+    PC= df[df['Device Type'].str.contains("PC", regex=False)]
+    shape=PC.shape
+    PC=shape[0]
+    list.append(PC)
+    Telo= df[df['Device Type'].str.contains("Phone", regex=False)]
+    shape=Telo.shape
+    Telo=shape[0]
+    list.append(Telo)
+    return list
 
 print(f"Oled vaadanud {mitu_osa(film)} osa {filminimi}i.")
 if mitu_osa(film)>3:
     print(f"Oled vaadanud seda sarja {tunde_vaatamisele(film)}.")
 else:
     print(f"Oled vaadanud seda filmi {tunde_vaatamisele(film)}.")
+
+if PCjaTelo()[0]>PCjaTelo()[1]:
+    print("Kasutad Netflixi vaatamiseks rohkem arvutit.")
+elif PCjaTelo()[0]<PCjaTelo()[1]:
+    print("Kasutad Netflixi vaatamiseks rohkem telefoni.")
+else:
+    print("Kasutad Netflixi vaatamiseks sama palju nii telefoni kui ka arvutit.")
+    
+#Tegeleb pärast sellega
+#nimi=str(df["Profile Name"])
+#print(nimi)
