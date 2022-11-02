@@ -16,8 +16,7 @@ df.index = df.index.tz_convert('EET')
 df = df.reset_index()
 
 #Eemaldan veerud mida ei kavatse kasutada
-df = df.drop(['Attributes', 'Latest Bookmark', 'Country'], axis=1)
-
+df = df.drop(['Attributes', 'Latest Bookmark', 'Supplemental Video Type', 'Country'], axis=1)
 #Muudan kestvuse pandale arusaadavaks
 df['Duration'] = pd.to_timedelta(df['Duration'])
 
@@ -35,6 +34,21 @@ def tunde_vaatamisele(film):
     tunnid_vaatamisele=tunnid_vaatamisele.replace(":"," minutit ",1)
     tunnid_vaatamisele=tunnid_vaatamisele + " sekundit"
     return(tunnid_vaatamisele)
+
+#VAJAB FIXIMIST!
+def keskmiselt_vaatasid(film):
+    tunnid_vaatamisele=film['Duration'].sum()
+    filme_kokku=film['Duration'].count()
+    keskmine=tunnid_vaatamisele/filme_kokku
+    keskmine=str(keskmine)
+    keskmine=keskmine.replace(" days ",":")
+    keskmine=keskmine.split(":")
+    if keskmine[0]=="0" and keskmine[1]=="00":
+        keskmine2=round(float(keskmine[3]))
+        keskmine=keskmine[2] + " minutit " + keskmine2 + " sekundit."
+        return keskmine
+    return keskmine
+print(keskmiselt_vaatasid(film))
 
 #Funktsioon tagastab mitu osa on filmi vaadatud
 def mitu_osa(film):
