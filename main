@@ -1,0 +1,5 @@
+import pandas as pd
+
+df = pd.read_csv('ViewingActivity.csv')
+
+print(df.head(1))
