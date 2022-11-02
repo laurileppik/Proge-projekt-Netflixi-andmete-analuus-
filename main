@@ -23,4 +23,13 @@ filminimi=input("Sisesta film/sari mille kohta tahad infot saada! ")
 film=df[df['Title'].str.contains(filminimi, regex=False)]
 film = film[(film['Duration'] > '0 days 00:01:00')]
 
-print(film.shape)
+def tunde_vaatamisele(film):
+    tunnid_vaatamisele=film['Duration'].sum()
+    tunnid_vaatamisele=str(tunnid_vaatamisele)
+    tunnid_vaatamisele=tunnid_vaatamisele.replace("days"," päeva")
+    tunnid_vaatamisele=tunnid_vaatamisele.replace(":"," tundi ",1)
+    tunnid_vaatamisele=tunnid_vaatamisele.replace(":"," minutit ",1)
+    tunnid_vaatamisele=tunnid_vaatamisele + " sekundit"
+    return(tunnid_vaatamisele)
+
+print(tunde_vaatamisele(film))
