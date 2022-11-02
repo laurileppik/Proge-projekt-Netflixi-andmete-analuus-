@@ -55,6 +55,12 @@ def PCjaTelo():
     list.append(Telo)
     return list
 
+#Funktsioon tagastab programmi kasutaja nime.
+def nimi():
+    nimi=df["Profile Name"]
+    return(nimi[0])
+
+print(f"Tere {nimi()}!")
 print(f"Oled vaadanud {mitu_osa(film)} osa {filminimi}i.")
 if mitu_osa(film)>3:
     print(f"Oled vaadanud seda sarja {tunde_vaatamisele(film)}.")
@@ -62,12 +68,8 @@ else:
     print(f"Oled vaadanud seda filmi {tunde_vaatamisele(film)}.")
 
 if PCjaTelo()[0]>PCjaTelo()[1]:
-    print("Kasutad Netflixi vaatamiseks rohkem arvutit.")
+    print("Kasutad Netflixi vaatamiseks rohkem arvutit kui telefoni.")
 elif PCjaTelo()[0]<PCjaTelo()[1]:
-    print("Kasutad Netflixi vaatamiseks rohkem telefoni.")
+    print("Kasutad Netflixi vaatamiseks rohkem telefoni kui arvutit.")
 else:
     print("Kasutad Netflixi vaatamiseks sama palju nii telefoni kui ka arvutit.")
-    
-#Tegeleb pärast sellega
-#nimi=str(df["Profile Name"])
-#print(nimi)
