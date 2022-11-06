@@ -35,7 +35,7 @@ def tunde_vaatamisele(film):
     tunnid_vaatamisele=tunnid_vaatamisele + " sekundit"
     return(tunnid_vaatamisele)
 
-#VAJAB FIXIMIST!
+#Funktsioon tagastab kui kaua vaatasid filmi järjest
 def keskmiselt_vaatasid(film):
     tunnid_vaatamisele=film['Duration'].sum()
     filme_kokku=film['Duration'].count()
@@ -45,10 +45,9 @@ def keskmiselt_vaatasid(film):
     keskmine=keskmine.split(":")
     if keskmine[0]=="0" and keskmine[1]=="00":
         keskmine2=round(float(keskmine[3]))
-        keskmine=keskmine[2] + " minutit " + keskmine2 + " sekundit."
+        keskmine=str(keskmine[2]) + " minutit " + str(keskmine2) + " sekundit."
         return keskmine
     return keskmine
-print(keskmiselt_vaatasid(film))
 
 #Funktsioon tagastab mitu osa on filmi vaadatud
 def mitu_osa(film):
@@ -75,11 +74,15 @@ def nimi():
     return(nimi[0])
 
 print(f"Tere {nimi()}!")
-print(f"Oled vaadanud {mitu_osa(film)} osa {filminimi}i.")
+
 if mitu_osa(film)>3:
     print(f"Oled vaadanud seda sarja {tunde_vaatamisele(film)}.")
+    print(f"Oled vaadanud {mitu_osa(film)} osa sarja {filminimi}.")
+    print(f"Keskmiselt vaatasid seda sarja järjest {keskmiselt_vaatasid(film)}")
 else:
     print(f"Oled vaadanud seda filmi {tunde_vaatamisele(film)}.")
+    print(f"Oled vaadanud {mitu_osa(film)} osa filmi{filminimi}.")
+    print(f"Keskmiselt vaatasid seda filmi järjest {keskmiselt_vaatasid(film)}")
 
 if PCjaTelo()[0]>PCjaTelo()[1]:
     print("Kasutad Netflixi vaatamiseks rohkem arvutit kui telefoni.")
@@ -87,3 +90,4 @@ elif PCjaTelo()[0]<PCjaTelo()[1]:
     print("Kasutad Netflixi vaatamiseks rohkem telefoni kui arvutit.")
 else:
     print("Kasutad Netflixi vaatamiseks sama palju nii telefoni kui ka arvutit.")
+    
