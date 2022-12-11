@@ -1,35 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import PySimpleGUI as sg
-
-df = pd.read_csv('ViewingActivity.csv')
-
-#df.head(1) väljastab kogu esimese rea info
-#print(df.head(1))
-#df.dtypes väljastab andmeklassid
-#print(df.dtypes)
-
-#Selle reaga teen starttime pandale loetavaks
-df['Start Time'] = pd.to_datetime(df['Start Time'], utc=True)
-
-#Nende 3 reaga muudan UTC EETks
-df = df.set_index('Start Time')
-df.index = df.index.tz_convert('EET')
-df = df.reset_index()
-
-#Eemaldan veerud mida ei kavatse kasutada
-df = df.drop(['Attributes', 'Latest Bookmark', 'Supplemental Video Type', 'Country'], axis=1)
-#Muudan kestvuse pandale arusaadavaks
-df['Duration'] = pd.to_timedelta(df['Duration'])
-
-#Küsin filminime ja filtreerin välja filmid, mida on vaadetud alla minuti
-filminimi=input("Sisesta film/sari mille kohta tahad infot saada! ")
-film=df[df['Title'].str.contains(filminimi, regex=False)]
-film = film[(film['Duration'] > '0 days 00:01:00')]
-
-#Sorteerin vaatamise nädalapäevadeks ja tundideks
-film['weekday'] = film['Start Time'].dt.weekday
-film['hour'] = film['Start Time'].dt.hour
+import PySimpleGUI as ui
 
 #Funktsioon tagastab kui mitu tundi on filmi/sarja vaadatud
 def tunde_vaatamisele(film):
@@ -104,16 +75,60 @@ def kellal_vaadatud(film):
     plt.ylabel("Osade arv")
     plt.show()
 
-print(f"Tere {nimi()}!")
+#UI akna layout ja theme
+ui.theme("DarkBlue14")
+layout = [  [ui.Text("Vali Netflixi andmete fail"), ui.Input(key="-FILE_PATH-"), ui.FileBrowse(file_types=(("CSV failid", "*.csv"),))],
+            [ui.Text("Sisesta film/sari mille kohta soovid statistikat:"), ui.Input(key="-FILM-")],
+            [ui.Button("Kinnita")],
+            [ui.Text("Funktsioonid (Kasuta peale kinnitamist):")],
+            [ui.Button("Kui kaua vaatasid filmi/sarja kokku")],
+            [ui.Push(), ui.Exit(button_text="Sulge", button_color="tomato", s=15)]   ]
 
-if mitu_osa(film)>3:
-    print(f"Oled vaadanud seda sarja {tunde_vaatamisele(film)}.")
-    print(f"Oled vaadanud {mitu_osa(film)} osa sarja {filminimi}.")
-    print(f"Keskmiselt vaatasid seda sarja järjest {keskmiselt_vaatasid(film)}")
-else:
-    print(f"Oled vaadanud seda filmi {tunde_vaatamisele(film)}.")
-    print(f"Oled vaadanud {mitu_osa(film)} osa filmi{filminimi}.")
-    print(f"Keskmiselt vaatasid seda filmi järjest {keskmiselt_vaatasid(film)}")
+#UI akna pealkiri
+window = ui.Window("Netflixi vaatamise statistika", layout, use_custom_titlebar=True)
+
+while True:
+    event, values = window.Read()
+    if event == "Kinnita":
+        failiasukoht=values["-FILE_PATH-"]
+        filminimi=values["-FILM-"]
+        print(filminimi)
+        if failiasukoht=="":
+            ui.Popup("Palun vali fail", keep_on_top=True)
+        elif filminimi=="":
+            ui.Popup("Palun sisesta filmi/sarja nimi", keep_on_top=True)
+        else:
+            ui.popup("Andmed on kinnitatud", keep_on_top=True)
+    if event == "Kui kaua vaatasid filmi/sarja kokku":
+        if mitu_osa(film)>3: # !TODO: 'film' ei ole defineeritud isegi kui enne kinnitada
+            ui.popup(f"Kokku vaatasid {filminimi} {mitu_osa(film)} osa ja {tunde_vaatamisele(film)} tundi.\nKeskmiselt vaatasid järjest {keskmiselt_vaatasid(film)}", keep_on_top=True)
+    if event in (ui.WINDOW_CLOSED, "Sulge"):
+        break
+
+df = pd.read_csv(failiasukoht)
+
+#Selle reaga teen starttime pandale loetavaks
+df['Start Time'] = pd.to_datetime(df['Start Time'], utc=True)
+
+#Nende 3 reaga muudan UTC EETks
+df = df.set_index('Start Time')
+df.index = df.index.tz_convert('EET')
+df = df.reset_index()
+
+#Eemaldan veerud mida ei kavatse kasutada
+df = df.drop(['Attributes', 'Latest Bookmark', 'Supplemental Video Type', 'Country'], axis=1)
+#Muudan kestvuse pandale arusaadavaks
+df['Duration'] = pd.to_timedelta(df['Duration'])
+
+#Küsin filminime ja filtreerin välja filmid, mida on vaadetud alla minuti
+film=df[df['Title'].str.contains(filminimi, regex=False)]
+film = film[(film['Duration'] > '0 days 00:01:00')]
+
+#Sorteerin vaatamise nädalapäevadeks ja tundideks
+film['weekday'] = film['Start Time'].dt.weekday
+film['hour'] = film['Start Time'].dt.hour
+
+print(f"Tere {nimi()}!")
 
 if PCjaTelo()[0]>PCjaTelo()[1]:
     print("Kasutad Netflixi vaatamiseks rohkem arvutit kui telefoni.")
@@ -121,5 +136,8 @@ elif PCjaTelo()[0]<PCjaTelo()[1]:
     print("Kasutad Netflixi vaatamiseks rohkem telefoni kui arvutit.")
 else:
     print("Kasutad Netflixi vaatamiseks sama palju nii telefoni kui ka arvutit.")
-millal_vaadatud(film)
-kellal_vaadatud(film)
+#millal_vaadatud(film)
+#kellal_vaadatud(film)
+
+#Akna sulgemine
+window.close()

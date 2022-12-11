@@ -80,7 +80,7 @@ def nimi():
 
 #Funktsioon mis tagastab kõige rohkem tunde vaadatud sarja
 def enim_vaadatud():
-    "Kood on veel puudu"
+    "list kõigi unique pealkirjadega -> tunde_vaatamisele(pealkiri) -> tagastada enim_vaadatud ja inputi asukoht"
 
 #Funktsioon mis teeb graafiku vaatamise jaotusest üle päevade
 def millal_vaadatud(film):
