@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import PySimpleGUI as ui
+import math
 
 #Funktsioon tagastab kui mitu tundi on filmi/sarja vaadatud
 def tunde_vaatamisele(film):
@@ -10,7 +11,10 @@ def tunde_vaatamisele(film):
     tunnid_vaatamisele=tunnid_vaatamisele.replace(":"," tundi ",1)
     tunnid_vaatamisele=tunnid_vaatamisele.replace(":"," minutit ",1)
     tunnid_vaatamisele=tunnid_vaatamisele + " sekundit"
-    return(tunnid_vaatamisele)
+    if tunnid_vaatamisele[:1]=="0":
+        return(tunnid_vaatamisele[9:])
+    else:
+        return(tunnid_vaatamisele)
 
 #Funktsioon tagastab kui kaua vaatasid filmi järjest
 def keskmiselt_vaatasid(film):
@@ -51,8 +55,46 @@ def nimi():
     return(nimi[0])
 
 #Funktsioon mis tagastab kõige rohkem tunde vaadatud sarja
-#def enim_vaadatud():
-#Kood on veel puudu
+def enim_vaadatud():
+    list1 = df["Duration"].values.tolist()
+    list2 = df["Title"].values.tolist()
+    õige_nimi=[]
+    for i in list2:
+        i=i.replace("_hook_",":")
+        i=i.split(":")
+        i=i[:1]
+        õige_nimi.append(i)
+    
+    sõn={}
+
+    if len(list1) == len(õige_nimi):
+        for i in range(len(õige_nimi)):
+            if õige_nimi[i][0] not in sõn:
+                sõn[õige_nimi[i][0]] = 0
+
+            sõn[õige_nimi[i][0]] += list1[i]
+
+    siiani_max=0
+    for i in sõn.items():
+        if i[1]>siiani_max:
+            siiani_max=i[1]
+            voitja=i[0]
+        else:
+            continue
+    return voitja
+
+#Funktsioon mis tagastab kogu Netflixis veedetud aja.
+def kogu_aeg():
+    tunnid_vaatamisele = str(df["Duration"].sum())
+    tunnid_vaatamisele=tunnid_vaatamisele.replace(" days "," päeva ")
+    tunnid_vaatamisele=tunnid_vaatamisele.replace(":"," tundi ",1)
+    tunnid_vaatamisele=tunnid_vaatamisele.replace(":"," minutit ")
+    tunnid_vaatamisele=tunnid_vaatamisele + " sekundit"
+
+    if tunnid_vaatamisele[0]==0:
+        tunnid_vaatamisele=tunnid_vaatamisele.replace("0 päeva ","") 
+    else:
+        return tunnid_vaatamisele
 
 #Funktsioon mis teeb graafiku vaatamise jaotusest üle päevade
 def millal_vaadatud(film):
@@ -82,7 +124,7 @@ layout = [  [ui.Text("Vali Netflixi andmete fail"), ui.Input(key="-FILE_PATH-"),
             [ui.Button("Kinnita")],
             [ui.Text("Funktsioonid (Kasuta peale kinnitamist):")],
             [ui.Button("Kui kaua vaatasid filmi/sarja kokku")],[ui.Button("Millist seadet kasutasid vaatamiseks rohkem")], [ui.Button("Millal vaatasid filmi/sarja nädala lõikes")], [ui.Button("Millal vaatasid filmi/sarja tunni lõikes")],
-            [ui.Push(), ui.Exit(button_text="Sulge", button_color="tomato", s=15)]   ]
+            [ui.Button("Missugust sarja oled kõige rohkem vaadanud")], [ui.Button("Kui palju oled sa kokku Netflixi vaadanud")], [ui.Push(), ui.Exit(button_text="Sulge", button_color="tomato", s=15)]   ]
 
 #UI aken
 window = ui.Window("Netflixi vaatamise statistika", layout, use_custom_titlebar=True)
@@ -115,11 +157,13 @@ while True: # Võibolla ei peaks while loopi kasutama
             ui.popup_error("Palun sisesta filmi/sarja nimi", keep_on_top=True) 
         else:
             ui.popup(f"Tere {nimi()}!\nFail on valitud ja saate nüüd kasutada funktsioone!", keep_on_top=True, title="Kinnitus")
+
     elif event == "Kui kaua vaatasid filmi/sarja kokku":
         if mitu_osa(film)>3:
             ui.popup(f"Kokku vaatasid sarja {filminimi} {mitu_osa(film)} osa.\nVaatamisele kulus {tunde_vaatamisele(film)}\nKeskmiselt vaatasid järjest {keskmiselt_vaatasid(film)}", title="Kui kaua vaatasid sarja kokku", keep_on_top=True)
         else:
             ui.popup(f"Kokku vaatasid filmi {filminimi} {mitu_osa(film)} osa.\nVaatamisele kulus {tunde_vaatamisele(film)}\nKeskmiselt vaatasid järjest {keskmiselt_vaatasid(film)}", title="Kui kaua vaatasid filmi kokku", keep_on_top=True)
+
     elif event == "Millist seadet kasutasid vaatamiseks rohkem":
         if PCjaTelo()[0]>PCjaTelo()[1]:
             ui.popup(f"Kasutasid Netflixi vaatamiseks rohkem arvutit kui telefoni.", title="Millist seadet kasutasid vaatamiseks rohkem", keep_on_top=True)
@@ -127,10 +171,19 @@ while True: # Võibolla ei peaks while loopi kasutama
             ui.popup(f"Kasutasid Netflixi vaatamiseks rohkem telefoni kui arvutit.", title="Millist seadet kasutasid vaatamiseks rohkem", keep_on_top=True)
         else:
             ui.popup(f"Kasutasid Netflixi vaatamiseks sama palju nii telefoni kui ka arvutit.", title="Millist seadet kasutasid vaatamiseks rohkem", keep_on_top=True)
+    
+    elif event == "Kui palju oled sa kokku Netflixi vaadanud":
+        ui.popup(f"Oled kokku vaadanud Netflixi {kogu_aeg()}.", keep_on_top=True, title="Kui palju oled sa kokku Netflixi vaadanud")
+
+    elif event == "Missugust sarja oled kõige rohkem vaadanud":
+        ui.popup(f"Oled kõige rohkem vaadanud sarja {enim_vaadatud()}.", keep_on_top=True, title="Millist sarja oled kõige rohkem vaadanud")
+
     elif event == "Millal vaatasid filmi/sarja nädala lõikes":
         millal_vaadatud(film)
+
     elif event == "Millal vaatasid filmi/sarja tunni lõikes":
         kellal_vaadatud(film)
+
     elif event in (ui.WINDOW_CLOSED, "Sulge"):
         break
 
