@@ -39,14 +39,13 @@ def mitu_osa(film):
 #Funktsioon tagastab mitu korda on vaadatud filme/sarju [arvutist,telefonist]
 def PCjaTelo():
     list=[]
-    PC= df[df['Device Type'].str.contains("PC", regex=False)]
-    shape=PC.shape
-    PC=shape[0]
+    PC= df['Device Type'].str.contains('PC|MAC|Windows').sum()
     list.append(PC)
-    Telo= df[df['Device Type'].str.contains("Phone", regex=False)]
-    shape=Telo.shape
-    Telo=shape[0]
+    Telo= df['Device Type'].str.contains('Phone|Android|Mobile').sum()
     list.append(Telo)
+    TV= df['Device Type'].str.contains('TV').sum()
+    list.append(TV)
+    print(list)
     return list
 
 #Funktsioon tagastab programmi kasutaja nime.
@@ -140,7 +139,6 @@ while True: # Võibolla ei peaks while loopi kasutama
         df = pd.read_csv(failiasukoht)
         #Filtreerib välja read, mis ei ole seotud antud nimedega
         values=[sinunimi]
-        print(values)
         df=df.query("`Profile Name` in @values")
         #Selle reaga teen starttime pandale loetavaks
         df['Start Time'] = pd.to_datetime(df['Start Time'], utc=True)
@@ -172,12 +170,14 @@ while True: # Võibolla ei peaks while loopi kasutama
             ui.popup(f"Kokku vaatasid filmi {filminimi} {mitu_osa(film)} osa.\nVaatamisele kulus {tunde_vaatamisele(film)}\nKeskmiselt vaatasid järjest {keskmiselt_vaatasid(film)}", title="Kui kaua vaatasid filmi kokku", keep_on_top=True)
 
     elif event == "Millist seadet kasutasid vaatamiseks rohkem":
-        if PCjaTelo()[0]>PCjaTelo()[1]:
-            ui.popup(f"Kasutasid Netflixi vaatamiseks rohkem arvutit kui telefoni.", title="Millist seadet kasutasid vaatamiseks rohkem", keep_on_top=True)
+        if PCjaTelo()[2]>PCjaTelo()[0] and PCjaTelo()[2]>PCjaTelo()[1]:
+            ui.popup(f"Kasutasid Netflixi vaatamiseks kõige rohkem telekat.", title="Millist seadet kasutasid vaatamiseks rohkem", keep_on_top=True)
+        elif PCjaTelo()[1]<PCjaTelo()[0]:
+            ui.popup(f"Kasutasid Netflixi vaatamiseks kõige rohkem arvutit.", title="Millist seadet kasutasid vaatamiseks rohkem", keep_on_top=True)
         elif PCjaTelo()[0]<PCjaTelo()[1]:
-            ui.popup(f"Kasutasid Netflixi vaatamiseks rohkem telefoni kui arvutit.", title="Millist seadet kasutasid vaatamiseks rohkem", keep_on_top=True)
+            ui.popup(f"Kasutasid Netflixi vaatamiseks kõige rohkem telefoni.", title="Millist seadet kasutasid vaatamiseks rohkem", keep_on_top=True)
         else:
-            ui.popup(f"Kasutasid Netflixi vaatamiseks sama palju nii telefoni kui ka arvutit.", title="Millist seadet kasutasid vaatamiseks rohkem", keep_on_top=True)
+            ui.popup(f"Kasutasid Netflixi vaatamiseks sama palju nii telefoni, telekat kui ka arvutit.", title="Millist seadet kasutasid vaatamiseks rohkem", keep_on_top=True)
     
     elif event == "Kui palju oled sa kokku Netflixi vaadanud":
         ui.popup(f"Oled kokku vaadanud Netflixi {kogu_aeg()}.", keep_on_top=True, title="Kui palju oled sa kokku Netflixi vaadanud")
