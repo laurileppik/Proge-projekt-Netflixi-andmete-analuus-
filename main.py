@@ -121,6 +121,7 @@ def kellal_vaadatud(film):
 ui.theme("DarkBlue14")
 layout = [  [ui.Text("Vali Netflixi andmete fail"), ui.Input(key="-FILE_PATH-"), ui.FileBrowse("Sirvi", file_types=(("CSV failid", "*.csv"),))],
             [ui.Text("Sisesta film/sari mille kohta soovid statistikat:"), ui.Input(key="-FILM-")],
+            [ui.Text("Sisesta oma Netflixi kasutajanimi:"), ui.Input(key="-NIMI-")],
             [ui.Button("Kinnita")],
             [ui.Text("Funktsioonid (Kasuta peale kinnitamist):")],
             [ui.Button("Kui kaua vaatasid filmi/sarja kokku")],[ui.Button("Millist seadet kasutasid vaatamiseks rohkem")], [ui.Button("Millal vaatasid filmi/sarja nädala lõikes")], [ui.Button("Millal vaatasid filmi/sarja tunni lõikes")],
@@ -134,8 +135,13 @@ while True: # Võibolla ei peaks while loopi kasutama
     if event == "Kinnita":
         failiasukoht=values["-FILE_PATH-"]
         filminimi=values["-FILM-"]
+        sinunimi=values["-NIMI-"]
         #Küsin filminime ja filtreerin välja filmid, mida on vaadetud alla minuti
         df = pd.read_csv(failiasukoht)
+        #Filtreerib välja read, mis ei ole seotud antud nimedega
+        values=[sinunimi]
+        print(values)
+        df=df.query("`Profile Name` in @values")
         #Selle reaga teen starttime pandale loetavaks
         df['Start Time'] = pd.to_datetime(df['Start Time'], utc=True)
         #Nende 3 reaga muudan UTC EETks
@@ -151,6 +157,7 @@ while True: # Võibolla ei peaks while loopi kasutama
         #Sorteerin vaatamise nädalapäevadeks ja tundideks
         film['weekday'] = film['Start Time'].dt.weekday
         film['hour'] = film['Start Time'].dt.hour
+
         if failiasukoht=="":
             ui.popup_error("Palun vali fail", keep_on_top=True) #errorid ei, tööta praegu see crashib lihtsalt
         elif filminimi=="":
