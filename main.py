@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import PySimpleGUI as ui
 import math
+from collections import Counter
 
 #Funktsioon tagastab kui mitu tundi on filmi/sarja vaadatud
 def tunde_vaatamisele(film):
@@ -45,7 +46,6 @@ def PCjaTelo():
     list.append(Telo)
     TV= df['Device Type'].str.contains('TV').sum()
     list.append(TV)
-    print(list)
     return list
 
 #Funktsioon tagastab programmi kasutaja nime.
@@ -116,6 +116,19 @@ def kellal_vaadatud(film):
     plt.ylabel("Osade arv")
     plt.show()
 
+def kõik_filmid():
+    õige_filmid=[]
+    filmid = df["Title"].values.tolist()
+    for i in filmid:
+        i=i.replace("_hook_",":")
+        i=i.replace(" - C",":")
+        i=i.split(":")
+        i=i[:1]
+        i=i[0]
+        õige_filmid.append(i)
+    film=set(õige_filmid)
+    return film
+    
 #UI akna layout ja theme
 ui.theme("DarkBlue14")
 layout = [  [ui.Text("Vali Netflixi andmete fail"), ui.Input(key="-FILE_PATH-"), ui.FileBrowse("Sirvi", file_types=(("CSV failid", "*.csv"),))],
@@ -123,7 +136,7 @@ layout = [  [ui.Text("Vali Netflixi andmete fail"), ui.Input(key="-FILE_PATH-"),
             [ui.Text("Sisesta oma Netflixi kasutajanimi:"), ui.Input(key="-NIMI-")],
             [ui.Button("Kinnita")],
             [ui.Text("Funktsioonid (Kasuta peale kinnitamist):")],
-            [ui.Button("Kui kaua vaatasid filmi/sarja kokku")],[ui.Button("Millist seadet kasutasid vaatamiseks rohkem")], [ui.Button("Millal vaatasid filmi/sarja nädala lõikes")], [ui.Button("Millal vaatasid filmi/sarja tunni lõikes")],
+            [ui.Button("Kõik vaadatud Netflixi filmid/sarjad")],[ui.Button("Kui kaua vaatasid filmi/sarja kokku")],[ui.Button("Millist seadet kasutasid vaatamiseks rohkem")], [ui.Button("Millal vaatasid filmi/sarja nädala lõikes")], [ui.Button("Millal vaatasid filmi/sarja tunni lõikes")],
             [ui.Button("Missugust sarja oled kõige rohkem vaadanud")], [ui.Button("Kui palju oled sa kokku Netflixi vaadanud")], [ui.Push(), ui.Exit(button_text="Sulge", button_color="tomato", s=15)]   ]
 
 #UI aken
@@ -137,9 +150,13 @@ while True: # Võibolla ei peaks while loopi kasutama
         sinunimi=values["-NIMI-"]
         #Küsin filminime ja filtreerin välja filmid, mida on vaadetud alla minuti
         df = pd.read_csv(failiasukoht)
+
         #Filtreerib välja read, mis ei ole seotud antud nimedega
         values=[sinunimi]
         df=df.query("`Profile Name` in @values")
+        #Eemaldan trailerid ja hookid
+        values2=["HOOK","TRAILER"]
+        df=df.query("`Supplemental Video Type` not in @values2")
         #Selle reaga teen starttime pandale loetavaks
         df['Start Time'] = pd.to_datetime(df['Start Time'], utc=True)
         #Nende 3 reaga muudan UTC EETks
@@ -162,7 +179,10 @@ while True: # Võibolla ei peaks while loopi kasutama
             ui.popup_error("Palun sisesta filmi/sarja nimi", keep_on_top=True) 
         else:
             ui.popup(f"Tere {nimi()}!\nFail on valitud ja saate nüüd kasutada funktsioone!", keep_on_top=True, title="Kinnitus")
-
+    
+    elif event == "Kõik vaadatud Netflixi filmid/sarjad":
+        ui.popup(f"{kõik_filmid()}", title="Kõik vaadatud Netflixi filmid/sarjad", keep_on_top=True)
+    
     elif event == "Kui kaua vaatasid filmi/sarja kokku":
         if mitu_osa(film)>3:
             ui.popup(f"Kokku vaatasid sarja {filminimi} {mitu_osa(film)} osa.\nVaatamisele kulus {tunde_vaatamisele(film)}\nKeskmiselt vaatasid järjest {keskmiselt_vaatasid(film)}", title="Kui kaua vaatasid sarja kokku", keep_on_top=True)
