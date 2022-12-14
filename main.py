@@ -13,6 +13,8 @@ def tunde_vaatamisele(film):
     tunnid_vaatamisele=tunnid_vaatamisele.replace(":"," minutit ",1)
     tunnid_vaatamisele=tunnid_vaatamisele + " sekundit"
     if tunnid_vaatamisele[:1]=="0":
+        if tunnid_vaatamisele[9]=="0":
+            return(tunnid_vaatamisele[10:])
         return(tunnid_vaatamisele[9:])
     else:
         return(tunnid_vaatamisele)
@@ -28,6 +30,10 @@ def keskmiselt_vaatasid(film):
     if keskmine[0]=="0" and keskmine[1]=="00":
         keskmine2=round(float(keskmine[3]))
         keskmine=str(keskmine[2]) + " minutit " + str(keskmine2) + " sekundit."
+        return keskmine
+    elif  keskmine[0]=="0" and keskmine[1]=="01":
+        keskmine2=round(float(keskmine[3]))
+        keskmine=str(keskmine[1])[1] + " tundi " + str(keskmine[2]) + " minutit " + str(keskmine2) + " sekundit."
         return keskmine
     return keskmine
 
@@ -148,6 +154,7 @@ layout2 = [  [ui.Text("Vali Netflixi andmete fail"), ui.Input(key="-FILE_PATH-")
              [ui.Push(), ui.Exit(button_text="Sulge", button_color="tomato", s=15)]    ]
 window2 = ui.Window("Netflixi vaatamise statistika", layout2, use_custom_titlebar=True)
 
+kaskinni=0
 #Esimene aken
 while True: 
     event2, values2 = window2.Read()
@@ -167,6 +174,11 @@ while True:
         values3=[sinunimi]
         df=df.query("`Profile Name` in @values3")
         break
+
+    elif event2 in (ui.WINDOW_CLOSED, "Sulge"):
+        kaskinni=1
+        break
+        
 window2.close()
 
 #Teise akna layout
@@ -180,64 +192,68 @@ layout = [  [ui.Text("Sisesta film/sari mille kohta soovid statistikat:"), ui.Co
 window = ui.Window("Netflixi vaatamise statistika", layout, use_custom_titlebar=True)
 
 #Teine aken
-while True:
-    event, values = window.Read()
-    if event == "Vali":
-        #Selle reaga teen starttime pandale loetavaks
-        df['Start Time'] = pd.to_datetime(df['Start Time'], utc=True)
-        #Nende 3 reaga muudan UTC EETks
-        df = df.set_index('Start Time')
-        df.index = df.index.tz_convert('EET')
-        df = df.reset_index()
+if kaskinni==0:
+    while True:
+        event, values = window.Read()
+        if event == "Vali":
+            #Selle reaga teen starttime pandale loetavaks
+            df['Start Time'] = pd.to_datetime(df['Start Time'], utc=True)
+            #Nende 3 reaga muudan UTC EETks
+            df = df.set_index('Start Time')
+            df.index = df.index.tz_convert('EET')
+            df = df.reset_index()
 
-        filminimi=values["-FILM-"]
-        #Muudan kestvuse pandale arusaadavaks ja filtreerin välja filmid, mida on vaadetud alla minuti
-        df['Duration'] = pd.to_timedelta(df['Duration'])
-        film=df[df['Title'].str.contains(filminimi, regex=False)]
-        film = film[(film['Duration'] > '0 days 00:01:00')]
-        #Sorteerin vaatamise nädalapäevadeks ja tundideks
-        film['weekday'] = film['Start Time'].dt.weekday
-        film['hour'] = film['Start Time'].dt.hour
-        if failiasukoht=="":
-            ui.popup_error("Palun vali fail", keep_on_top=True) #errorid ei, tööta praegu see crashib lihtsalt
-        elif filminimi=="":
-            ui.popup_error("Palun sisesta filmi/sarja nimi", keep_on_top=True) 
-        else:
-            if mitu_osa(film)>3:
-                ui.popup("Oled valinud sarja, saad nüüd kasutada funktsioone!", keep_on_top=True, title="Kinnitus")
+            filminimi=values["-FILM-"]
+            #Muudan kestvuse pandale arusaadavaks ja filtreerin välja filmid, mida on vaadetud alla minuti
+            df['Duration'] = pd.to_timedelta(df['Duration'])
+            film=df[df['Title'].str.contains(filminimi, regex=False)]
+            film = film[(film['Duration'] > '0 days 00:01:00')]
+            #Sorteerin vaatamise nädalapäevadeks ja tundideks
+            film['weekday'] = film['Start Time'].dt.weekday
+            film['hour'] = film['Start Time'].dt.hour
+            if failiasukoht=="":
+                ui.popup_error("Palun vali fail", keep_on_top=True) #errorid ei, tööta praegu see crashib lihtsalt
+            elif filminimi=="":
+                ui.popup_error("Palun sisesta filmi/sarja nimi", keep_on_top=True) 
             else:
-                ui.popup("Oled valinud filmi, saad nüüd kasutada funktsioone!", keep_on_top=True, title="Kinnitus")
-    
-    elif event == "Kui kaua vaatasid filmi/sarja kokku":
-        if mitu_osa(film)>3:
-            ui.popup(f"Kokku vaatasid sarja {filminimi} {mitu_osa(film)} osa.\nVaatamisele kulus {tunde_vaatamisele(film)}\nKeskmiselt vaatasid järjest {keskmiselt_vaatasid(film)}", title="Kui kaua vaatasid sarja kokku", keep_on_top=True)
-        else:
-            ui.popup(f"Kokku vaatasid filmi {filminimi} {mitu_osa(film)} osa.\nVaatamisele kulus {tunde_vaatamisele(film)}\nKeskmiselt vaatasid järjest {keskmiselt_vaatasid(film)}", title="Kui kaua vaatasid filmi kokku", keep_on_top=True)
+                if mitu_osa(film)>3:
+                    ui.popup("Oled valinud sarja, saad nüüd kasutada funktsioone!", keep_on_top=True, title="Kinnitus")
+                else:
+                    ui.popup("Oled valinud filmi, saad nüüd kasutada funktsioone!", keep_on_top=True, title="Kinnitus")
+        
+        elif event == "Kui kaua vaatasid filmi/sarja kokku":
+            if mitu_osa(film)>3:
+                ui.popup(f"Kokku vaatasid sarja {filminimi} {mitu_osa(film)} osa.\nVaatamisele kulus {tunde_vaatamisele(film)}\nKeskmiselt vaatasid järjest {keskmiselt_vaatasid(film)}", title="Kui kaua vaatasid sarja kokku", keep_on_top=True)
+            else:
+                ui.popup(f"Kokku vaatasid filmi {filminimi} {mitu_osa(film)} osa.\nVaatamisele kulus {tunde_vaatamisele(film)}\nKeskmiselt vaatasid järjest {keskmiselt_vaatasid(film)}", title="Kui kaua vaatasid filmi kokku", keep_on_top=True)
 
-    elif event == "Millist seadet oled vaatamiseks kõige rohkem kasutanud":
-        if PCjaTelo()[2]>PCjaTelo()[0] and PCjaTelo()[2]>PCjaTelo()[1]:
-            ui.popup(f"Kasutasid Netflixi vaatamiseks kõige rohkem telekat.", title="Millist seadet oled vaatamiseks kõige rohkem kasutanud", keep_on_top=True)
-        elif PCjaTelo()[1]<PCjaTelo()[0]:
-            ui.popup(f"Kasutasid Netflixi vaatamiseks kõige rohkem arvutit.", title="Millist seadet oled vaatamiseks kõige rohkem kasutanud", keep_on_top=True)
-        elif PCjaTelo()[0]<PCjaTelo()[1]:
-            ui.popup(f"Kasutasid Netflixi vaatamiseks kõige rohkem telefoni.", title="Millist seadet oled vaatamiseks kõige rohkem kasutanud", keep_on_top=True)
-        else:
-            ui.popup(f"Kasutasid Netflixi vaatamiseks sama palju nii telefoni, telekat kui ka arvutit.", title="Millist seadet oled vaatamiseks kõige rohkem kasutanud", keep_on_top=True)
-    
-    elif event == "Kui palju oled sa kokku Netflixi vaadanud":
-        ui.popup(f"Oled kokku vaadanud Netflixi {kogu_aeg()}.", keep_on_top=True, title="Kui palju oled sa kokku Netflixi vaadanud")
+        elif event == "Millist seadet oled vaatamiseks kõige rohkem kasutanud":
+            if PCjaTelo()[2]>PCjaTelo()[0] and PCjaTelo()[2]>PCjaTelo()[1]:
+                ui.popup(f"Kasutasid Netflixi vaatamiseks kõige rohkem telekat.", title="Millist seadet oled vaatamiseks kõige rohkem kasutanud", keep_on_top=True)
+            elif PCjaTelo()[1]<PCjaTelo()[0]:
+                ui.popup(f"Kasutasid Netflixi vaatamiseks kõige rohkem arvutit.", title="Millist seadet oled vaatamiseks kõige rohkem kasutanud", keep_on_top=True)
+            elif PCjaTelo()[0]<PCjaTelo()[1]:
+                ui.popup(f"Kasutasid Netflixi vaatamiseks kõige rohkem telefoni.", title="Millist seadet oled vaatamiseks kõige rohkem kasutanud", keep_on_top=True)
+            else:
+                ui.popup(f"Kasutasid Netflixi vaatamiseks sama palju nii telefoni, telekat kui ka arvutit.", title="Millist seadet oled vaatamiseks kõige rohkem kasutanud", keep_on_top=True)
+        
+        elif event == "Kui palju oled sa kokku Netflixi vaadanud":
+            ui.popup(f"Oled kokku vaadanud Netflixi {kogu_aeg()}.", keep_on_top=True, title="Kui palju oled sa kokku Netflixi vaadanud")
 
-    elif event == "Missugust sarja oled kõige rohkem vaadanud":
-        ui.popup(f"Oled kõige rohkem vaadanud sarja {enim_vaadatud()}.", keep_on_top=True, title="Millist sarja oled kõige rohkem vaadanud")
+        elif event == "Missugust sarja oled kõige rohkem vaadanud":
+            ui.popup(f"Oled kõige rohkem vaadanud sarja {enim_vaadatud()}.", keep_on_top=True, title="Millist sarja oled kõige rohkem vaadanud")
 
-    elif event == "Millal vaatasid filmi/sarja nädala lõikes":
-        millal_vaadatud(film)
+        elif event == "Millal vaatasid filmi/sarja nädala lõikes":
+            millal_vaadatud(film)
 
-    elif event == "Millal vaatasid filmi/sarja tunni lõikes":
-        kellal_vaadatud(film)
+        elif event == "Millal vaatasid filmi/sarja tunni lõikes":
+            kellal_vaadatud(film)
 
-    elif event in (ui.WINDOW_CLOSED, "Sulge"):
-        break
+        elif event in (ui.WINDOW_CLOSED, "Sulge"):
+            break
 
-#Akna sulgemine
-window.close()
+    #Akna sulgemine
+    window.close()
+
+else:
+    pass
