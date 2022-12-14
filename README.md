@@ -1,2 +1,2 @@
 # Proge-projekt-Netflixi-andmete-analuus-
-Programm, mis analuusib Netflixi andmeid.
+Programm, mis analüüsib Netflixi andmeid.
