@@ -117,7 +117,6 @@ def kellal_vaadatud(film):
     plt.show()
 
 #Funktsioon, mis tagastab kõik filmid hulgana
-#HETKEL VEEL PROBLEEM, ET TAGASTAB NONE ILMA PÕHJUSETA KUI KINNI PANNA
 def kõik_filmid():
     #Eemaldab kõik alla minutised vaatamised
     pikkus = pd.to_timedelta(df['Duration'])
@@ -137,55 +136,60 @@ def kõik_filmid():
     filmid=set(õige_filmid)
     filmid=list(filmid)
     filmid.sort()
-
-    layout2=[[ui.Text("Kõik filmid")],[ui.Combo(filmid,key='board')],
-    [ui.Push(), ui.Exit(button_text="Sulge", button_color="tomato", s=15)] ]
-    window2 = ui.Window("Kõik filmid", layout2, use_custom_titlebar=True)
-    while True:
-        event, values = window2.Read()
-        if event in (ui.WINDOW_CLOSED, "Sulge"):
-            break
-    window2.close()
+    return filmid
     
-#UI akna layout ja theme
+#UI akna theme
 ui.theme("DarkBlue14")
-layout = [  [ui.Text("Vali Netflixi andmete fail"), ui.Input(key="-FILE_PATH-"), ui.FileBrowse("Sirvi", file_types=(("CSV failid", "*.csv"),))],
-            [ui.Text("Sisesta oma Netflixi kasutajanimi:"), ui.Input(key="-NIMI-")],
-            [ui.Button("Kinnita")],
-            [ui.Text("Sisesta film/sari mille kohta soovid statistikat:"), ui.Input(key="-FILM-")],
+
+#Esimese akna layout
+layout2 = [  [ui.Text("Vali Netflixi andmete fail"), ui.Input(key="-FILE_PATH-"), ui.FileBrowse("Sirvi", file_types=(("CSV failid", "*.csv"),)),ui.Button("Kinnita")],
+             [ui.Text("Sisesta oma Netflixi kasutajanimi:"), ui.Input(key="-NIMI-")],
+             [ui.Button("Kinnita ")],
+             [ui.Push(), ui.Exit(button_text="Sulge", button_color="tomato", s=15)]    ]
+window2 = ui.Window("Netflixi vaatamise statistika", layout2, use_custom_titlebar=True)
+
+#Esimene aken
+while True: 
+    event2, values2 = window2.Read()
+    if event2 == "Kinnita":
+        failiasukoht=values2["-FILE_PATH-"]
+        df = pd.read_csv(failiasukoht)
+        #Eemaldan trailerid ja hookid
+        values4=["HOOK","TRAILER"]
+        df=df.query("`Supplemental Video Type` not in @values4")
+        #Eemaldan veerud mida ei kavatse kasutada
+        df = df.drop(['Attributes', 'Latest Bookmark', 'Supplemental Video Type', 'Country'], axis=1)
+        ui.popup("Oled valinud faili, vali nüüd enda kasutajanimi!", keep_on_top=True, title="Kinnitus")
+
+    if event2 == "Kinnita ":
+        sinunimi=values2["-NIMI-"]
+        #Filtreerib välja read, mis ei ole seotud antud nimedega
+        values3=[sinunimi]
+        df=df.query("`Profile Name` in @values3")
+        break
+window2.close()
+
+#Teise akna layout
+layout = [  [ui.Text("Sisesta film/sari mille kohta soovid statistikat:"), ui.Combo(kõik_filmid(),key="-FILM-")],
             [ui.Button("Vali")],
             [ui.Text("Funktsioonid (Kasuta peale kinnitamist):")],
-            [ui.Button("Kui kaua vaatasid filmi/sarja kokku")],[ui.Button("Millist seadet kasutasid vaatamiseks rohkem")], [ui.Button("Millal vaatasid filmi/sarja nädala lõikes")], [ui.Button("Millal vaatasid filmi/sarja tunni lõikes")],
+            [ui.Button("Kui kaua vaatasid filmi/sarja kokku")],[ui.Button("Millist seadet oled vaatamiseks kõige rohkem kasutanud")], [ui.Button("Millal vaatasid filmi/sarja nädala lõikes")], [ui.Button("Millal vaatasid filmi/sarja tunni lõikes")],
             [ui.Button("Missugust sarja oled kõige rohkem vaadanud")], [ui.Button("Kui palju oled sa kokku Netflixi vaadanud")], [ui.Push(), ui.Exit(button_text="Sulge", button_color="tomato", s=15)]   ]
 
 #UI aken
 window = ui.Window("Netflixi vaatamise statistika", layout, use_custom_titlebar=True)
 
-while True: # Võibolla ei peaks while loopi kasutama
+#Teine aken
+while True:
     event, values = window.Read()
-    
-    if event == "Kinnita":
-        failiasukoht=values["-FILE_PATH-"]
-        df = pd.read_csv(failiasukoht)
-        sinunimi=values["-NIMI-"]
-        #Filtreerib välja read, mis ei ole seotud antud nimedega
-        values=[sinunimi]
-        df=df.query("`Profile Name` in @values")
-        #Eemaldan trailerid ja hookid
-        values2=["HOOK","TRAILER"]
-        df=df.query("`Supplemental Video Type` not in @values2")
+    if event == "Vali":
         #Selle reaga teen starttime pandale loetavaks
         df['Start Time'] = pd.to_datetime(df['Start Time'], utc=True)
         #Nende 3 reaga muudan UTC EETks
         df = df.set_index('Start Time')
         df.index = df.index.tz_convert('EET')
         df = df.reset_index()
-        #Eemaldan veerud mida ei kavatse kasutada
-        df = df.drop(['Attributes', 'Latest Bookmark', 'Supplemental Video Type', 'Country'], axis=1)
-        ui.popup(f"Fail ja kasutajanimi on valitud!\nNüüd saad valida filmi/sarja, mille kohta soovid statistikat.", keep_on_top=True, title="Valik")
-        kõik_filmid()
-    
-    elif event == "Vali":
+
         filminimi=values["-FILM-"]
         #Muudan kestvuse pandale arusaadavaks ja filtreerin välja filmid, mida on vaadetud alla minuti
         df['Duration'] = pd.to_timedelta(df['Duration'])
@@ -200,9 +204,9 @@ while True: # Võibolla ei peaks while loopi kasutama
             ui.popup_error("Palun sisesta filmi/sarja nimi", keep_on_top=True) 
         else:
             if mitu_osa(film)>3:
-                ui.popup("Oled valinud sarja ja saad nüüd kasutada funktsioone!", keep_on_top=True, title="Kinnitus")
+                ui.popup("Oled valinud sarja, saad nüüd kasutada funktsioone!", keep_on_top=True, title="Kinnitus")
             else:
-                ui.popup("Oled valinud filmi ja saad nüüd kasutada funktsioone!", keep_on_top=True, title="Kinnitus")
+                ui.popup("Oled valinud filmi, saad nüüd kasutada funktsioone!", keep_on_top=True, title="Kinnitus")
     
     elif event == "Kui kaua vaatasid filmi/sarja kokku":
         if mitu_osa(film)>3:
@@ -210,15 +214,15 @@ while True: # Võibolla ei peaks while loopi kasutama
         else:
             ui.popup(f"Kokku vaatasid filmi {filminimi} {mitu_osa(film)} osa.\nVaatamisele kulus {tunde_vaatamisele(film)}\nKeskmiselt vaatasid järjest {keskmiselt_vaatasid(film)}", title="Kui kaua vaatasid filmi kokku", keep_on_top=True)
 
-    elif event == "Millist seadet kasutasid vaatamiseks rohkem":
+    elif event == "Millist seadet oled vaatamiseks kõige rohkem kasutanud":
         if PCjaTelo()[2]>PCjaTelo()[0] and PCjaTelo()[2]>PCjaTelo()[1]:
-            ui.popup(f"Kasutasid Netflixi vaatamiseks kõige rohkem telekat.", title="Millist seadet kasutasid vaatamiseks rohkem", keep_on_top=True)
+            ui.popup(f"Kasutasid Netflixi vaatamiseks kõige rohkem telekat.", title="Millist seadet oled vaatamiseks kõige rohkem kasutanud", keep_on_top=True)
         elif PCjaTelo()[1]<PCjaTelo()[0]:
-            ui.popup(f"Kasutasid Netflixi vaatamiseks kõige rohkem arvutit.", title="Millist seadet kasutasid vaatamiseks rohkem", keep_on_top=True)
+            ui.popup(f"Kasutasid Netflixi vaatamiseks kõige rohkem arvutit.", title="Millist seadet oled vaatamiseks kõige rohkem kasutanud", keep_on_top=True)
         elif PCjaTelo()[0]<PCjaTelo()[1]:
-            ui.popup(f"Kasutasid Netflixi vaatamiseks kõige rohkem telefoni.", title="Millist seadet kasutasid vaatamiseks rohkem", keep_on_top=True)
+            ui.popup(f"Kasutasid Netflixi vaatamiseks kõige rohkem telefoni.", title="Millist seadet oled vaatamiseks kõige rohkem kasutanud", keep_on_top=True)
         else:
-            ui.popup(f"Kasutasid Netflixi vaatamiseks sama palju nii telefoni, telekat kui ka arvutit.", title="Millist seadet kasutasid vaatamiseks rohkem", keep_on_top=True)
+            ui.popup(f"Kasutasid Netflixi vaatamiseks sama palju nii telefoni, telekat kui ka arvutit.", title="Millist seadet oled vaatamiseks kõige rohkem kasutanud", keep_on_top=True)
     
     elif event == "Kui palju oled sa kokku Netflixi vaadanud":
         ui.popup(f"Oled kokku vaadanud Netflixi {kogu_aeg()}.", keep_on_top=True, title="Kui palju oled sa kokku Netflixi vaadanud")
