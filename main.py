@@ -85,6 +85,7 @@ def enim_vaadatud():
 #Funktsioon mis tagastab kogu Netflixis veedetud aja.
 def kogu_aeg():
     tunnid_vaatamisele = str(df["Duration"].sum())
+    print(tunnid_vaatamisele)
     tunnid_vaatamisele=tunnid_vaatamisele.replace(" days "," päeva ")
     tunnid_vaatamisele=tunnid_vaatamisele.replace(":"," tundi ",1)
     tunnid_vaatamisele=tunnid_vaatamisele.replace(":"," minutit ")
@@ -116,9 +117,17 @@ def kellal_vaadatud(film):
     plt.ylabel("Osade arv")
     plt.show()
 
+#Funktsioon, mis tagastab kõik filmid hulgana
+#HETKEL VEEL PROBLEEM, ET TAGASTAB NONE ILMA PÕHJUSETA KUI KINNI PANNA
 def kõik_filmid():
+    #Eemaldab kõik alla minutised vaatamised
+    pikkus = pd.to_timedelta(df['Duration'])
+    pikkus = pikkus.apply(lambda x: x.value)
+    uusdf=df[(pikkus) >= 60000000000]
+
+    #Esialgu tekitab listi kõikidest filmidest
     õige_filmid=[]
-    filmid = df["Title"].values.tolist()
+    filmid = uusdf["Title"].values.tolist()
     for i in filmid:
         i=i.replace("_hook_",":")
         i=i.replace(" - C",":")
@@ -126,8 +135,18 @@ def kõik_filmid():
         i=i[:1]
         i=i[0]
         õige_filmid.append(i)
-    film=set(õige_filmid)
-    return film
+    filmid=set(õige_filmid)
+    filmid=list(filmid)
+    filmid.sort()
+
+    layout2=[[ui.Text("Kõik filmid")],[ui.Combo(filmid,key='board')],
+    [ui.Push(), ui.Exit(button_text="Sulge", button_color="tomato", s=15)] ]
+    window2 = ui.Window("Kõik filmid", layout2, use_custom_titlebar=True)
+    while True:
+        event, values = window2.Read()
+        if event in (ui.WINDOW_CLOSED, "Sulge"):
+            break
+    window2.close()
     
 #UI akna layout ja theme
 ui.theme("DarkBlue14")
@@ -148,7 +167,7 @@ while True: # Võibolla ei peaks while loopi kasutama
         failiasukoht=values["-FILE_PATH-"]
         filminimi=values["-FILM-"]
         sinunimi=values["-NIMI-"]
-        #Küsin filminime ja filtreerin välja filmid, mida on vaadetud alla minuti
+        #Küsin filminime 
         df = pd.read_csv(failiasukoht)
 
         #Filtreerib välja read, mis ei ole seotud antud nimedega
@@ -165,7 +184,7 @@ while True: # Võibolla ei peaks while loopi kasutama
         df = df.reset_index()
         #Eemaldan veerud mida ei kavatse kasutada
         df = df.drop(['Attributes', 'Latest Bookmark', 'Supplemental Video Type', 'Country'], axis=1)
-        #Muudan kestvuse pandale arusaadavaks
+        #Muudan kestvuse pandale arusaadavaks ja filtreerin välja filmid, mida on vaadetud alla minuti
         df['Duration'] = pd.to_timedelta(df['Duration'])
         film=df[df['Title'].str.contains(filminimi, regex=False)]
         film = film[(film['Duration'] > '0 days 00:01:00')]
