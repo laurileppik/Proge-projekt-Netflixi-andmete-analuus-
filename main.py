@@ -85,7 +85,6 @@ def enim_vaadatud():
 #Funktsioon mis tagastab kogu Netflixis veedetud aja.
 def kogu_aeg():
     tunnid_vaatamisele = str(df["Duration"].sum())
-    print(tunnid_vaatamisele)
     tunnid_vaatamisele=tunnid_vaatamisele.replace(" days "," päeva ")
     tunnid_vaatamisele=tunnid_vaatamisele.replace(":"," tundi ",1)
     tunnid_vaatamisele=tunnid_vaatamisele.replace(":"," minutit ")
