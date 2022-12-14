@@ -85,7 +85,6 @@ def enim_vaadatud():
 #Funktsioon mis tagastab kogu Netflixis veedetud aja.
 def kogu_aeg():
     tunnid_vaatamisele = str(df["Duration"].sum())
-    print(tunnid_vaatamisele)
     tunnid_vaatamisele=tunnid_vaatamisele.replace(" days "," päeva ")
     tunnid_vaatamisele=tunnid_vaatamisele.replace(":"," tundi ",1)
     tunnid_vaatamisele=tunnid_vaatamisele.replace(":"," minutit ")
@@ -151,11 +150,12 @@ def kõik_filmid():
 #UI akna layout ja theme
 ui.theme("DarkBlue14")
 layout = [  [ui.Text("Vali Netflixi andmete fail"), ui.Input(key="-FILE_PATH-"), ui.FileBrowse("Sirvi", file_types=(("CSV failid", "*.csv"),))],
-            [ui.Text("Sisesta film/sari mille kohta soovid statistikat:"), ui.Input(key="-FILM-")],
             [ui.Text("Sisesta oma Netflixi kasutajanimi:"), ui.Input(key="-NIMI-")],
             [ui.Button("Kinnita")],
+            [ui.Text("Sisesta film/sari mille kohta soovid statistikat:"), ui.Input(key="-FILM-")],
+            [ui.Button("Vali")],
             [ui.Text("Funktsioonid (Kasuta peale kinnitamist):")],
-            [ui.Button("Kõik vaadatud Netflixi filmid/sarjad")],[ui.Button("Kui kaua vaatasid filmi/sarja kokku")],[ui.Button("Millist seadet kasutasid vaatamiseks rohkem")], [ui.Button("Millal vaatasid filmi/sarja nädala lõikes")], [ui.Button("Millal vaatasid filmi/sarja tunni lõikes")],
+            [ui.Button("Kui kaua vaatasid filmi/sarja kokku")],[ui.Button("Millist seadet kasutasid vaatamiseks rohkem")], [ui.Button("Millal vaatasid filmi/sarja nädala lõikes")], [ui.Button("Millal vaatasid filmi/sarja tunni lõikes")],
             [ui.Button("Missugust sarja oled kõige rohkem vaadanud")], [ui.Button("Kui palju oled sa kokku Netflixi vaadanud")], [ui.Push(), ui.Exit(button_text="Sulge", button_color="tomato", s=15)]   ]
 
 #UI aken
@@ -163,13 +163,11 @@ window = ui.Window("Netflixi vaatamise statistika", layout, use_custom_titlebar=
 
 while True: # Võibolla ei peaks while loopi kasutama
     event, values = window.Read()
+    
     if event == "Kinnita":
         failiasukoht=values["-FILE_PATH-"]
-        filminimi=values["-FILM-"]
-        sinunimi=values["-NIMI-"]
-        #Küsin filminime 
         df = pd.read_csv(failiasukoht)
-
+        sinunimi=values["-NIMI-"]
         #Filtreerib välja read, mis ei ole seotud antud nimedega
         values=[sinunimi]
         df=df.query("`Profile Name` in @values")
@@ -184,6 +182,11 @@ while True: # Võibolla ei peaks while loopi kasutama
         df = df.reset_index()
         #Eemaldan veerud mida ei kavatse kasutada
         df = df.drop(['Attributes', 'Latest Bookmark', 'Supplemental Video Type', 'Country'], axis=1)
+        ui.popup(f"Fail ja kasutajanimi on valitud!\nNüüd saad valida filmi/sarja, mille kohta soovid statistikat.", keep_on_top=True, title="Valik")
+        kõik_filmid()
+    
+    elif event == "Vali":
+        filminimi=values["-FILM-"]
         #Muudan kestvuse pandale arusaadavaks ja filtreerin välja filmid, mida on vaadetud alla minuti
         df['Duration'] = pd.to_timedelta(df['Duration'])
         film=df[df['Title'].str.contains(filminimi, regex=False)]
@@ -191,16 +194,15 @@ while True: # Võibolla ei peaks while loopi kasutama
         #Sorteerin vaatamise nädalapäevadeks ja tundideks
         film['weekday'] = film['Start Time'].dt.weekday
         film['hour'] = film['Start Time'].dt.hour
-
         if failiasukoht=="":
             ui.popup_error("Palun vali fail", keep_on_top=True) #errorid ei, tööta praegu see crashib lihtsalt
         elif filminimi=="":
             ui.popup_error("Palun sisesta filmi/sarja nimi", keep_on_top=True) 
         else:
-            ui.popup(f"Tere {nimi()}!\nFail on valitud ja saate nüüd kasutada funktsioone!", keep_on_top=True, title="Kinnitus")
-    
-    elif event == "Kõik vaadatud Netflixi filmid/sarjad":
-        ui.popup(f"{kõik_filmid()}", title="Kõik vaadatud Netflixi filmid/sarjad", keep_on_top=True)
+            if mitu_osa(film)>3:
+                ui.popup("Oled valinud sarja ja saad nüüd kasutada funktsioone!", keep_on_top=True, title="Kinnitus")
+            else:
+                ui.popup("Oled valinud filmi ja saad nüüd kasutada funktsioone!", keep_on_top=True, title="Kinnitus")
     
     elif event == "Kui kaua vaatasid filmi/sarja kokku":
         if mitu_osa(film)>3:
