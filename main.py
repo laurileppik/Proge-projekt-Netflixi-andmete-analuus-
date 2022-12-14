@@ -152,7 +152,7 @@ layout2 = [  [ui.Text("Vali Netflixi andmete fail"), ui.Input(key="-FILE_PATH-")
              [ui.Text("Sisesta oma Netflixi kasutajanimi:"), ui.Input(key="-NIMI-")],
              [ui.Button("Kinnita ")],
              [ui.Push(), ui.Exit(button_text="Sulge", button_color="tomato", s=15)]    ]
-window2 = ui.Window("Netflixi vaatamise statistika", layout2, use_custom_titlebar=True)
+window2 = ui.Window("Netflixi vaatamise statistika", layout2, use_custom_titlebar=True, keep_on_top=True, margins=(0,0), element_justification="center", finalize=True)
 
 kaskinni=0
 #Esimene aken
@@ -189,7 +189,7 @@ layout = [  [ui.Text("Sisesta film/sari mille kohta soovid statistikat:"), ui.Co
             [ui.Button("Missugust sarja oled kõige rohkem vaadanud")], [ui.Button("Kui palju oled sa kokku Netflixi vaadanud")], [ui.Push(), ui.Exit(button_text="Sulge", button_color="tomato", s=15)]   ]
 
 #UI aken
-window = ui.Window("Netflixi vaatamise statistika", layout, use_custom_titlebar=True)
+window = ui.Window("Netflixi vaatamise statistika", layout, use_custom_titlebar=True, keep_on_top=True)
 
 #Teine aken
 if kaskinni==0:
